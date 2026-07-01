@@ -1,0 +1,61 @@
+{
+  "users": {
+    "ananyamoharana8@gmail.com": {
+      "email": "ananyamoharana8@gmail.com",
+      "password": "anluu@06",
+      "data": {
+        "transactions": [
+          {
+            "id": 1782845799771,
+            "category": "Food",
+            "amount": 10,
+            "note": "",
+            "date": "2026-06-30T18:56:39.771Z"
+          }
+        ],
+        "loans": [],
+        "balance": 431,
+        "foodBudget": null,
+        "travelBudget": null,
+        "savings": {
+          "goalName": "laptop",
+          "goalAmount": 60000,
+          "currentAmount": 1500
+        },
+        "reminders": {
+          "reminders": {
+            "enabled": false,
+            "time": "20:00",
+            "browserEnabled": false,
+            "emailEnabled": false
+          }
+        }
+      }
+    },
+    "sudhesnubiswal@gmail.com": {
+      "email": "sudhesnubiswal@gmail.com",
+      "password": "sudluu@06",
+      "data": {
+        "name": "Maasum",
+        "transactions": [],
+        "loans": [],
+        "balance": 4500,
+        "foodBudget": null,
+        "travelBudget": null,
+        "savings": {
+          "goalName": "",
+          "goalAmount": null,
+          "currentAmount": 0
+        },
+        "reminders": {
+          "reminders": {
+            "enabled": true,
+            "time": "01:00",
+            "browserEnabled": true,
+            "emailEnabled": true
+          }
+        }
+      }
+    }
+  }
+}
