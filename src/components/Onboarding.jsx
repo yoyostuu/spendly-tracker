@@ -41,12 +41,10 @@ export default function Onboarding({ onComplete, onSetUser, initialStep = 1 }) {
         }
       } else {
         const response = await api.register(email, password, name.trim());
-        // Automatically login user
-        const loginResponse = await api.login(email, password);
-        onSetUser({ email: loginResponse.email, data: loginResponse.data });
+        onSetUser({ email: response.email, data: response.data });
         
-        if (loginResponse.data?.reminders?.enabled) {
-          onComplete(loginResponse.data.reminders);
+        if (response.data?.reminders?.enabled) {
+          onComplete(response.data.reminders);
           return;
         }
       }

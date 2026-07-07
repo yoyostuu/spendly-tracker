@@ -119,7 +119,7 @@ app.post('/api/auth/register', async (req, res) => {
         }
       });
       await newUser.save();
-      return res.status(201).json({ message: 'Registration successful', email: normalizedEmail });
+      return res.status(201).json({ message: 'Registration successful', email: normalizedEmail, data: newUser.data });
     } catch (err) {
       console.error('Cloud registration error:', err);
       return res.status(500).json({ error: 'Database error during account registration.' });
@@ -147,7 +147,7 @@ app.post('/api/auth/register', async (req, res) => {
     };
 
     writeDB(db);
-    return res.status(201).json({ message: 'Registration successful', email: normalizedEmail });
+    return res.status(201).json({ message: 'Registration successful', email: normalizedEmail, data: db.users[normalizedEmail].data });
   }
 });
 
@@ -164,7 +164,7 @@ app.post('/api/auth/login', async (req, res) => {
     try {
       const user = await User.findOne({ email: normalizedEmail });
       if (!user) {
-        return res.status(404).json({ error: 'No account found with this email. Please create an account instead.' });
+        return res.status(404).json({ error: 'No account found. Please create an account.' });
       }
       if (user.password !== password) {
         return res.status(401).json({ error: 'Incorrect password. Please try again.' });
@@ -185,7 +185,7 @@ app.post('/api/auth/login', async (req, res) => {
     const user = db.users[normalizedEmail];
 
     if (!user) {
-      return res.status(404).json({ error: 'No account found with this email. Please create an account instead.' });
+      return res.status(404).json({ error: 'No account found. Please create an account.' });
     }
     if (user.password !== password) {
       return res.status(401).json({ error: 'Incorrect password. Please try again.' });
