@@ -40,5 +40,18 @@ export const api = {
       throw new Error(err.error || 'Failed to sync data.');
     }
     return res.json();
+  },
+
+  async pull(email) {
+    const res = await fetch(`${API_BASE}/sync`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to pull data.');
+    }
+    return res.json();
   }
 };

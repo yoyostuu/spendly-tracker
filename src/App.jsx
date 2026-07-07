@@ -94,6 +94,43 @@ export default function App() {
     }
   }, [data, user]);
 
+  // Poll for cloud updates periodically or on tab focus
+  useEffect(() => {
+    if (!user?.email) return;
+
+    const pollUpdates = async () => {
+      try {
+        const response = await api.pull(user.email);
+        if (response.data) {
+          const serverStr = JSON.stringify(response.data);
+          const localStr = JSON.stringify(data);
+          if (serverStr !== localStr) {
+            setData(response.data);
+          }
+        }
+      } catch (err) {
+        console.error('Polling sync error:', err);
+      }
+    };
+
+    const handleFocus = () => {
+      pollUpdates();
+    };
+
+    window.addEventListener('focus', handleFocus);
+
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        pollUpdates();
+      }
+    }, 15000); // Poll every 15 seconds
+
+    return () => {
+      window.removeEventListener('focus', handleFocus);
+      clearInterval(interval);
+    };
+  }, [user, data]);
+
   const handleOnboardingComplete = (reminderSettings) => {
     setData(prev => ({
       ...prev,
