@@ -104,10 +104,16 @@ export default function Dashboard({
   // Loans summary
   const pendingLent = loans
     .filter((l) => l.type === 'Lent' && l.status === 'Pending')
-    .reduce((sum, l) => sum + l.amount, 0);
+    .reduce((sum, l) => {
+      const totalRepayed = (l.repayments || []).reduce((s, r) => s + r.amount, 0);
+      return sum + (l.amount - totalRepayed);
+    }, 0);
   const pendingBorrowed = loans
     .filter((l) => l.type === 'Borrowed' && l.status === 'Pending')
-    .reduce((sum, l) => sum + l.amount, 0);
+    .reduce((sum, l) => {
+      const totalRepayed = (l.repayments || []).reduce((s, r) => s + r.amount, 0);
+      return sum + (l.amount - totalRepayed);
+    }, 0);
 
   // Savings progress
   const hasSavingsGoal = savings && savings.goalAmount > 0;

@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
 import { X, Plus, Landmark, Trash2, Calendar, Check, AlertCircle } from 'lucide-react';
 
-export default function LoansSection({ loans = [], onClose, onSaveLoan, onDeleteLoan, onToggleStatus }) {
+export default function LoansSection({ loans = [], onClose, onSaveLoan, onDeleteLoan, onToggleStatus, onAddRepayment }) {
   const [showAddForm, setShowAddForm] = useState(false);
   const [person, setPerson] = useState('');
   const [amount, setAmount] = useState('');
   const [type, setType] = useState('Lent'); // Lent or Borrowed
   const [dueDate, setDueDate] = useState('');
   const [reminder, setReminder] = useState(false);
+  const [expandedLoanId, setExpandedLoanId] = useState(null);
+  const [repayAmt, setRepayAmt] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -61,86 +63,161 @@ export default function LoansSection({ loans = [], onClose, onSaveLoan, onDelete
                   No active loans or debts.
                 </div>
               ) : (
-                loans.map((loan) => (
-                  <div 
-                    key={loan.id} 
-                    style={{ 
-                      background: 'rgba(255, 255, 255, 0.02)', 
-                      border: '1px solid var(--border-color)', 
-                      borderRadius: '12px', 
-                      padding: '0.75rem 1rem',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      opacity: loan.status === 'Returned' ? 0.6 : 1,
-                      transition: 'var(--transition-smooth)'
-                    }}
-                  >
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                        <span style={{ 
-                          fontSize: '0.7rem', 
-                          fontWeight: '600', 
-                          padding: '2px 6px', 
-                          borderRadius: '4px',
-                          background: loan.type === 'Lent' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                          color: loan.type === 'Lent' ? 'var(--accent-loans)' : 'var(--accent-danger)'
-                        }}>
-                          {loan.type === 'Lent' ? 'Lent' : 'Borrowed'}
-                        </span>
-                        <span style={{ fontWeight: '600', fontSize: '0.9rem' }}>{loan.person}</span>
-                      </div>
-                      
-                      <div style={{ display: 'flex', gap: '0.75rem', marginTop: '4px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
-                        {loan.dueDate && (
-                          <span style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
-                            <Calendar size={12} /> Due: {getLocalDateString(loan.dueDate)}
-                          </span>
-                        )}
-                        {loan.status === 'Returned' && (
-                          <span style={{ color: 'var(--accent-loans)', fontWeight: '500' }}>✓ Settled</span>
-                        )}
-                      </div>
-                    </div>
+                loans.map((loan) => {
+                  const totalRepayed = (loan.repayments || []).reduce((sum, r) => sum + r.amount, 0);
+                  const remaining = Math.max(0, loan.amount - totalRepayed);
+                  const isExpanded = expandedLoanId === loan.id;
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                      <div style={{ textAlign: 'right' }}>
-                        <div style={{ 
-                          fontFamily: 'Manrope', 
-                          fontWeight: '700', 
-                          fontSize: '1rem',
-                          color: loan.type === 'Lent' ? 'var(--accent-loans)' : 'var(--accent-danger)' 
-                        }}>
-                          ₹{loan.amount}
+                  return (
+                    <div 
+                      key={loan.id} 
+                      style={{ 
+                        background: 'rgba(255, 255, 255, 0.02)', 
+                        border: '1px solid var(--border-color)', 
+                        borderRadius: '12px', 
+                        padding: '0.75rem 1rem',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        opacity: loan.status === 'Returned' ? 0.6 : 1,
+                        transition: 'var(--transition-smooth)',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => setExpandedLoanId(isExpanded ? null : loan.id)}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <span style={{ 
+                              fontSize: '0.7rem', 
+                              fontWeight: '600', 
+                              padding: '2px 6px', 
+                              borderRadius: '4px',
+                              background: loan.type === 'Lent' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+                              color: loan.type === 'Lent' ? 'var(--accent-loans)' : 'var(--accent-danger)'
+                            }}>
+                              {loan.type === 'Lent' ? 'Lent' : 'Borrowed'}
+                            </span>
+                            <span style={{ fontWeight: '600', fontSize: '0.9rem' }}>{loan.person}</span>
+                          </div>
+                          
+                          <div style={{ display: 'flex', gap: '0.75rem', marginTop: '4px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+                            {loan.dueDate && (
+                              <span style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                <Calendar size={12} /> Due: {getLocalDateString(loan.dueDate)}
+                              </span>
+                            )}
+                            {loan.status === 'Returned' && (
+                              <span style={{ color: 'var(--accent-loans)', fontWeight: '500' }}>✓ Settled</span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }} onClick={(e) => e.stopPropagation()}>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ 
+                              fontFamily: 'Manrope', 
+                              fontWeight: '700', 
+                              fontSize: '1rem',
+                              color: loan.type === 'Lent' ? 'var(--accent-loans)' : 'var(--accent-danger)' 
+                            }}>
+                              {totalRepayed > 0 ? `₹${remaining}` : `₹${loan.amount}`}
+                            </div>
+                            {totalRepayed > 0 && (
+                              <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)' }}>
+                                of ₹{loan.amount}
+                              </div>
+                            )}
+                          </div>
+
+                          <div style={{ display: 'flex', gap: '0.35rem' }}>
+                            <button 
+                              className="btn-icon" 
+                              style={{ 
+                                width: '26px', 
+                                height: '26px', 
+                                borderColor: loan.status === 'Returned' ? 'var(--accent-loans)' : 'var(--border-color)',
+                                backgroundColor: loan.status === 'Returned' ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
+                                color: loan.status === 'Returned' ? 'var(--accent-loans)' : 'var(--text-secondary)'
+                              }}
+                              onClick={() => onToggleStatus(loan.id)}
+                              title={loan.status === 'Returned' ? "Mark as Pending" : "Mark as Settled"}
+                            >
+                              <Check size={12} />
+                            </button>
+                            <button 
+                              className="btn-icon" 
+                              style={{ width: '26px', height: '26px', color: 'var(--accent-danger)' }}
+                              onClick={() => onDeleteLoan(loan.id)}
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
                         </div>
                       </div>
 
-                      <div style={{ display: 'flex', gap: '0.35rem' }}>
-                        <button 
-                          className="btn-icon" 
+                      {isExpanded && (
+                        <div 
+                          onClick={(e) => e.stopPropagation()} 
                           style={{ 
-                            width: '26px', 
-                            height: '26px', 
-                            borderColor: loan.status === 'Returned' ? 'var(--accent-loans)' : 'var(--border-color)',
-                            backgroundColor: loan.status === 'Returned' ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
-                            color: loan.status === 'Returned' ? 'var(--accent-loans)' : 'var(--text-secondary)'
+                            marginTop: '0.75rem', 
+                            paddingTop: '0.75rem', 
+                            borderTop: '1px dashed var(--border-color)', 
+                            width: '100%',
+                            animation: 'fadeIn 0.2s ease-out' 
                           }}
-                          onClick={() => onToggleStatus(loan.id)}
-                          title={loan.status === 'Returned' ? "Mark as Pending" : "Mark as Settled"}
                         >
-                          <Check size={12} />
-                        </button>
-                        <button 
-                          className="btn-icon" 
-                          style={{ width: '26px', height: '26px', color: 'var(--accent-danger)' }}
-                          onClick={() => onDeleteLoan(loan.id)}
-                        >
-                          <Trash2 size={12} />
-                        </button>
-                      </div>
+                          <div style={{ fontSize: '0.8rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
+                            Repayment Logs
+                          </div>
+                          
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', marginBottom: '0.75rem' }}>
+                            {(loan.repayments || []).length === 0 ? (
+                              <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', fontStyle: 'italic' }}>
+                                No partial repayments logged yet.
+                              </div>
+                            ) : (
+                              (loan.repayments || []).map((rep) => (
+                                <div key={rep.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', padding: '2px 0' }}>
+                                  <span style={{ fontWeight: '500' }}>₹{rep.amount} repaid</span>
+                                  <span style={{ color: 'var(--text-secondary)' }}>{getLocalDateString(rep.date)}</span>
+                                </div>
+                              ))
+                            )}
+                          </div>
+
+                          {loan.status !== 'Returned' && (
+                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                              <input 
+                                type="number" 
+                                className="input-field" 
+                                placeholder="Repay amount" 
+                                style={{ flex: 1, padding: '0.35rem 0.5rem', fontSize: '0.8rem' }}
+                                value={repayAmt}
+                                onChange={(e) => setRepayAmt(e.target.value)}
+                              />
+                              <button 
+                                type="button" 
+                                className="btn btn-primary" 
+                                style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', minHeight: 'auto', height: '30px' }}
+                                onClick={() => {
+                                  const amt = parseFloat(repayAmt);
+                                  if (isNaN(amt) || amt <= 0 || amt > remaining) {
+                                    alert(`Enter a valid amount up to ₹${remaining}`);
+                                    return;
+                                  }
+                                  onAddRepayment(loan.id, amt);
+                                  setRepayAmt('');
+                                }}
+                              >
+                                Add
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
 

@@ -248,19 +248,16 @@ export default function App() {
       const updatedLoans = prev.loans.map(loan => {
         if (loan.id === loanId) {
           const nextStatus = loan.status === 'Pending' ? 'Returned' : 'Pending';
+          const totalRepayed = (loan.repayments || []).reduce((sum, r) => sum + r.amount, 0);
+          const remainder = Math.max(0, loan.amount - totalRepayed);
           
-          // Balance adjustment on settling:
-          // Returned Lent -> they pay you back (balance increases)
-          // Returned Borrowed -> you pay them back (balance decreases)
-          // Toggling back to Pending reverses the settlement adjustment
           let settlementAmt = 0;
           if (nextStatus === 'Returned') {
-            settlementAmt = loan.type === 'Lent' ? loan.amount : -loan.amount;
+            settlementAmt = loan.type === 'Lent' ? remainder : -remainder;
           } else {
-            settlementAmt = loan.type === 'Lent' ? -loan.amount : loan.amount;
+            settlementAmt = loan.type === 'Lent' ? -remainder : remainder;
           }
 
-          // Apply balance adjustment on outer scope
           prev.balance += settlementAmt;
 
           return { ...loan, status: nextStatus };
@@ -274,7 +271,43 @@ export default function App() {
       };
     });
 
-    showToast('Loan status updated');
+    showToast('Status updated ✓');
+  };
+
+  const handleAddRepayment = (loanId, repaymentAmt) => {
+    setData(prev => {
+      const updatedLoans = prev.loans.map(loan => {
+        if (loan.id === loanId) {
+          const currentRepayments = loan.repayments || [];
+          const newRepayment = {
+            id: Date.now(),
+            amount: repaymentAmt,
+            date: new Date().toISOString()
+          };
+          const nextRepayments = [...currentRepayments, newRepayment];
+          const totalRepayed = nextRepayments.reduce((sum, r) => sum + r.amount, 0);
+          
+          const nextStatus = totalRepayed >= loan.amount ? 'Returned' : 'Pending';
+          const balanceChange = loan.type === 'Lent' ? repaymentAmt : -repaymentAmt;
+          
+          prev.balance += balanceChange;
+
+          return {
+            ...loan,
+            repayments: nextRepayments,
+            status: nextStatus
+          };
+        }
+        return loan;
+      });
+
+      return {
+        ...prev,
+        loans: updatedLoans
+      };
+    });
+
+    showToast('Repayment recorded ✓');
   };
 
   // Savings Actions
@@ -462,6 +495,7 @@ export default function App() {
           onSaveLoan={handleSaveLoan}
           onDeleteLoan={handleDeleteLoan}
           onToggleStatus={handleToggleLoanStatus}
+          onAddRepayment={handleAddRepayment}
         />
       )}
 
