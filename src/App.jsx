@@ -274,7 +274,7 @@ export default function App() {
     showToast('Status updated ✓');
   };
 
-  const handleAddRepayment = (loanId, repaymentAmt) => {
+  const handleAddRepayment = (loanId, repaymentAmt, customDate) => {
     setData(prev => {
       const updatedLoans = prev.loans.map(loan => {
         if (loan.id === loanId) {
@@ -282,7 +282,7 @@ export default function App() {
           const newRepayment = {
             id: Date.now(),
             amount: repaymentAmt,
-            date: new Date().toISOString()
+            date: customDate ? new Date(customDate).toISOString() : new Date().toISOString()
           };
           const nextRepayments = [...currentRepayments, newRepayment];
           const totalRepayed = nextRepayments.reduce((sum, r) => sum + r.amount, 0);

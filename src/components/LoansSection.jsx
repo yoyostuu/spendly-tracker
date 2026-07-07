@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Plus, Landmark, Trash2, Calendar, Check, AlertCircle } from 'lucide-react';
+import { X, Plus, Landmark, Trash2, Calendar, Check, AlertCircle, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function LoansSection({ loans = [], onClose, onSaveLoan, onDeleteLoan, onToggleStatus, onAddRepayment }) {
   const [showAddForm, setShowAddForm] = useState(false);
@@ -10,6 +10,7 @@ export default function LoansSection({ loans = [], onClose, onSaveLoan, onDelete
   const [reminder, setReminder] = useState(false);
   const [expandedLoanId, setExpandedLoanId] = useState(null);
   const [repayAmt, setRepayAmt] = useState('');
+  const [repayDate, setRepayDate] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -97,7 +98,10 @@ export default function LoansSection({ loans = [], onClose, onSaveLoan, onDelete
                             }}>
                               {loan.type === 'Lent' ? 'Lent' : 'Borrowed'}
                             </span>
-                            <span style={{ fontWeight: '600', fontSize: '0.9rem' }}>{loan.person}</span>
+                            <span style={{ fontWeight: '600', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                              {loan.person}
+                              {isExpanded ? <ChevronUp size={14} style={{ color: 'var(--text-secondary)' }} /> : <ChevronDown size={14} style={{ color: 'var(--text-secondary)' }} />}
+                            </span>
                           </div>
                           
                           <div style={{ display: 'flex', gap: '0.75rem', marginTop: '4px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
@@ -107,7 +111,10 @@ export default function LoansSection({ loans = [], onClose, onSaveLoan, onDelete
                               </span>
                             )}
                             {loan.status === 'Returned' && (
-                              <span style={{ color: 'var(--accent-loans)', fontWeight: '500' }}>✓ Settled</span>
+                              <span style={{ color: 'var(--accent-loans)', fontWeight: '500' }}>✓ Fully Repaid</span>
+                            )}
+                            {loan.status !== 'Returned' && !isExpanded && (
+                              <span style={{ color: 'var(--text-secondary)', fontStyle: 'italic', fontSize: '0.7rem' }}>(click to log repayment)</span>
                             )}
                           </div>
                         </div>
@@ -186,30 +193,40 @@ export default function LoansSection({ loans = [], onClose, onSaveLoan, onDelete
                           </div>
 
                           {loan.status !== 'Returned' && (
-                            <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                              <input 
-                                type="number" 
-                                className="input-field" 
-                                placeholder="Repay amount" 
-                                style={{ flex: 1, padding: '0.35rem 0.5rem', fontSize: '0.8rem' }}
-                                value={repayAmt}
-                                onChange={(e) => setRepayAmt(e.target.value)}
-                              />
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.5rem', width: '100%' }}>
+                              <div style={{ display: 'flex', gap: '0.5rem', width: '100%' }}>
+                                <input 
+                                  type="number" 
+                                  className="input-field" 
+                                  placeholder="Repay amount (₹)" 
+                                  style={{ flex: 1, padding: '0.35rem 0.5rem', fontSize: '0.85rem' }}
+                                  value={repayAmt}
+                                  onChange={(e) => setRepayAmt(e.target.value)}
+                                />
+                                <input 
+                                  type="date" 
+                                  className="input-field" 
+                                  style={{ flex: 1, padding: '0.35rem 0.5rem', fontSize: '0.85rem' }}
+                                  value={repayDate}
+                                  onChange={(e) => setRepayDate(e.target.value)}
+                                />
+                              </div>
                               <button 
                                 type="button" 
                                 className="btn btn-primary" 
-                                style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', minHeight: 'auto', height: '30px' }}
+                                style={{ width: '100%', padding: '0.45rem', fontSize: '0.85rem', minHeight: 'auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}
                                 onClick={() => {
                                   const amt = parseFloat(repayAmt);
                                   if (isNaN(amt) || amt <= 0 || amt > remaining) {
                                     alert(`Enter a valid amount up to ₹${remaining}`);
                                     return;
                                   }
-                                  onAddRepayment(loan.id, amt);
+                                  onAddRepayment(loan.id, amt, repayDate || null);
                                   setRepayAmt('');
+                                  setRepayDate('');
                                 }}
                               >
-                                Add
+                                Record Repayment
                               </button>
                             </div>
                           )}
